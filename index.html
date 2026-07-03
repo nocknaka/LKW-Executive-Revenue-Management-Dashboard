@@ -1,0 +1,408 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>LKW Executive Revenue Management Dashboard | โรงพยาบาลเลาขวัญ</title>
+
+<!-- Fonts -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Thai:wght@400;500;600;700;800&family=Inter:wght@500;600;700;800&display=swap" rel="stylesheet">
+
+<!-- Bootstrap 5 -->
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+<!-- Bootstrap Icons -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+<!-- ApexCharts -->
+<script src="https://cdn.jsdelivr.net/npm/apexcharts@3.49.1/dist/apexcharts.min.js"></script>
+<!-- SheetJS (ใช้ในหน้าอัปเดตข้อมูล) -->
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<div class="app-shell">
+
+  <!-- ===================== Sidebar ===================== -->
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-brand">
+      <div class="sidebar-brand__logo"><i class="bi bi-hospital"></i></div>
+      <div class="sidebar-brand__text">
+        <div class="sidebar-brand__title">จัดเก็บรายได้</div>
+        <div class="sidebar-brand__sub">Laokwan Hospital</div>
+      </div>
+    </div>
+
+    <nav class="sidebar-nav">
+      <div class="nav-section-label">เมนูหลัก</div>
+      <div class="sidebar-link active" data-page="dashboard" data-title="Dashboard">
+        <i class="bi bi-grid-1x2-fill"></i> Dashboard
+      </div>
+      <div class="sidebar-link" data-page="financial" data-title="ภาพรวมการเงิน">
+        <i class="bi bi-bar-chart-line-fill"></i> ภาพรวมการเงิน
+      </div>
+      <div class="sidebar-link" data-page="op" data-title="OP รายหน่วยงาน">
+        <i class="bi bi-people-fill"></i> OP รายหน่วยงาน
+      </div>
+      <div class="sidebar-link" data-page="ipd" data-title="IPD Dashboard">
+        <i class="bi bi-hospital"></i> IPD Dashboard
+      </div>
+      <div class="sidebar-link" data-page="fund" data-title="เงินบำรุง">
+        <i class="bi bi-piggy-bank-fill"></i> เงินบำรุง
+      </div>
+      <div class="sidebar-link" data-page="productivity" data-title="ผลงานและผลิตภาพ">
+        <i class="bi bi-graph-up-arrow"></i> ผลงานและผลิตภาพ
+      </div>
+      <div class="sidebar-link" data-page="kpi" data-title="KPI ผู้บริหาร">
+        <i class="bi bi-speedometer2"></i> KPI ผู้บริหาร
+      </div>
+
+      <div class="nav-section-label">อื่น ๆ</div>
+      <div class="sidebar-link" data-page="reports" data-title="รายงาน">
+        <i class="bi bi-file-earmark-text-fill"></i> รายงาน
+      </div>
+      <div class="sidebar-link" data-page="update" data-title="อัปเดตข้อมูล">
+        <i class="bi bi-arrow-repeat"></i> อัปเดตข้อมูล
+      </div>
+      <div class="sidebar-link" data-page="settings" data-title="ตั้งค่า">
+        <i class="bi bi-gear-fill"></i> ตั้งค่า
+      </div>
+    </nav>
+
+    <div class="sidebar-footer">
+      <div class="theme-toggle-row">
+        <span><i class="bi bi-moon-stars me-2"></i>โหมดมืด</span>
+        <div class="form-check form-switch mb-0">
+          <input class="form-check-input" type="checkbox" id="darkModeToggle">
+        </div>
+      </div>
+    </div>
+  </aside>
+
+  <!-- ===================== Main column ===================== -->
+  <div class="main-col">
+
+    <!-- Topbar -->
+    <header class="topbar">
+      <button class="sidebar-toggle-btn" id="sidebarToggleBtn"><i class="bi bi-list"></i></button>
+      <div class="topbar-title flex-grow-1">
+        <h1 id="topbarPageTitle">Dashboard</h1>
+        <p>ระบบบริหารจัดการรายได้ โรงพยาบาลเลาขวัญ</p>
+      </div>
+
+      <div class="topbar-chip">
+        <i class="bi bi-calendar3"></i>
+        <div>
+          <strong id="fiscalYearBadge">ปีงบประมาณ 2569</strong>
+          <span id="periodLabel">-</span>
+        </div>
+      </div>
+      <div class="topbar-chip d-none d-md-flex">
+        <i class="bi bi-arrow-repeat"></i>
+        <div>
+          <strong>อัปเดตล่าสุด</strong>
+          <span id="lastUpdatedLabel">-</span>
+        </div>
+      </div>
+
+      <div class="topbar-user">
+        <div class="topbar-user__avatar"><i class="bi bi-person-fill"></i></div>
+        <div class="d-none d-sm-block">
+          <div class="topbar-user__name">ผู้บริหาร</div>
+          <div class="topbar-user__role">Executive View</div>
+        </div>
+      </div>
+    </header>
+
+    <main class="page-content">
+
+      <!-- ================= PAGE: Dashboard ================= -->
+      <section class="page-view" id="page-dashboard">
+
+        <div class="section-block" id="claimBannerWrap">
+          <div class="data-note" id="claimDataNote">
+            <i class="bi bi-hourglass-split"></i>
+            <div>กำลังประมวลผลข้อมูล...</div>
+          </div>
+        </div>
+
+        <!-- KPI cards -->
+        <div class="section-block">
+          <div class="row g-3" id="kpiCardsWrap"></div>
+        </div>
+
+        <!-- Revenue trend + split -->
+        <div class="section-block">
+          <div class="row g-3">
+            <div class="col-lg-8">
+              <div class="panel">
+                <div class="panel-head">
+                  <div>
+                    <h3>แนวโน้มรายได้รวม ปีงบประมาณ 2569</h3>
+                    <div class="panel-sub">รายได้สะสม + รายได้รายเดือน (OP + IPD) หน่วย: ล้านบาท</div>
+                  </div>
+                </div>
+                <div id="chartRevenueTrend"></div>
+              </div>
+            </div>
+            <div class="col-lg-4">
+              <div class="panel">
+                <div class="panel-head">
+                  <div>
+                    <h3>สัดส่วนรายได้ UC / Non-UC</h3>
+                    <div class="panel-sub">เฉพาะรายได้ที่รับรู้แล้ว (ลบ.)</div>
+                  </div>
+                </div>
+                <div id="chartRevenueSplit"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- OP table + IP performance -->
+        <div class="section-block">
+          <div class="row g-3">
+            <div class="col-lg-6">
+              <div class="panel">
+                <div class="panel-head">
+                  <div>
+                    <h3>รายได้ OPD แยกตามหน่วยงาน</h3>
+                    <div class="panel-sub">ปีงบประมาณ 2569 (ไม่แยกตามสิทธิการรักษา) หน่วย: ล้านบาท</div>
+                  </div>
+                </div>
+                <div class="table-responsive">
+                  <table class="data-table">
+                    <thead>
+                      <tr><th></th><th>หน่วยงาน</th><th>สัดส่วน</th><th class="text-end">รายได้ (ลบ.)</th><th class="text-end">%</th></tr>
+                    </thead>
+                    <tbody id="opDeptTableBody"></tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+            <div class="col-lg-6">
+              <div class="panel">
+                <div class="panel-head">
+                  <div>
+                    <h3>ผลงานผู้ป่วยใน (IPD)</h3>
+                    <div class="panel-sub">Admit / AdjRW / อัตราครองเตียง (BOR) รายเดือน</div>
+                  </div>
+                </div>
+                <div id="chartIpPerformance"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Fund balance + Claim gap + AI summary -->
+        <div class="section-block">
+          <div class="row g-3">
+            <div class="col-lg-4">
+              <div class="panel d-flex flex-column">
+                <div class="panel-head">
+                  <div>
+                    <h3>เงินบำรุงคงเหลือ</h3>
+                    <div class="panel-sub">Non-UC Revenue Balance ณ เดือนล่าสุด</div>
+                  </div>
+                </div>
+                <div class="fund-balance-hero">
+                  <div class="fund-balance-hero__icon"><i class="bi bi-coin"></i></div>
+                  <div>
+                    <div class="fund-balance-hero__value num" id="fundBalanceValue">-</div>
+                    <div class="fund-balance-hero__label">ล้านบาท</div>
+                    <div class="mt-1" id="fundBalanceChange"></div>
+                  </div>
+                </div>
+                <div class="row g-2 mt-auto">
+                  <div class="col-6">
+                    <div class="mini-stat">
+                      <div class="mini-stat__label">รายรับสะสมปี 69</div>
+                      <div class="mini-stat__value num" id="fundIncomeTotal">-</div>
+                    </div>
+                  </div>
+                  <div class="col-6">
+                    <div class="mini-stat">
+                      <div class="mini-stat__label">รายจ่ายสะสมปี 69</div>
+                      <div class="mini-stat__value num" id="fundExpenseTotal">-</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="col-lg-4">
+              <div class="panel">
+                <div class="panel-head">
+                  <div>
+                    <h3>เคลม UC: เรียกเก็บ vs รับรู้รายได้</h3>
+                    <div class="panel-sub">หน่วย: ล้านบาท สะสมปีงบประมาณ 2569</div>
+                  </div>
+                </div>
+                <div id="chartClaimGap"></div>
+              </div>
+              <div class="panel mt-3">
+                <div class="panel-head">
+                  <div>
+                    <h3>เงินบำรุง: รายรับ-รายจ่าย รายเดือน</h3>
+                  </div>
+                </div>
+                <div id="chartFundTrend"></div>
+              </div>
+            </div>
+            <div class="col-lg-4">
+              <div class="ai-panel">
+                <div class="ai-panel-head">
+                  <div class="ai-panel-head__icon"><i class="bi bi-robot"></i></div>
+                  <div>
+                    <h3>AI วิเคราะห์ภาพรวม</h3>
+                    <p>AI Executive Summary</p>
+                  </div>
+                </div>
+                <div id="aiSummaryList"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </section>
+
+      <!-- ================= Placeholder pages ================= -->
+      <section class="page-view d-none" id="page-financial">
+        <div class="panel">
+          <div class="panel-head"><div><h3>ภาพรวมการเงิน</h3><div class="panel-sub">มุมมองการเงินเชิงลึก (งบรายรับ-รายจ่าย, Unit Cost)</div></div></div>
+          <div class="placeholder-page">
+            <i class="bi bi-bar-chart-line"></i>
+            <h3>อยู่ระหว่างพัฒนา</h3>
+            <p>หน้านี้จะรวมรายละเอียดงบการเงิน, Unit Cost OPD/IPD และการวิเคราะห์ต้นทุนเชิงลึก<br>ข้อมูลพื้นฐานพร้อมแล้วใน <code>js/data.json</code> — ต่อยอดกราฟเพิ่มได้จาก <code>js/chart.js</code></p>
+          </div>
+        </div>
+      </section>
+
+      <section class="page-view d-none" id="page-op">
+        <div class="panel">
+          <div class="panel-head"><div><h3>OP รายหน่วยงาน (รายละเอียด)</h3><div class="panel-sub">ตัวกรองตามช่วงเวลา / หน่วยงาน แบบเจาะลึก</div></div></div>
+          <div class="table-responsive mt-2">
+            <table class="data-table">
+              <thead><tr><th></th><th>หน่วยงาน</th><th>สัดส่วน</th><th class="text-end">รายได้ (ลบ.)</th><th class="text-end">%</th></tr></thead>
+              <tbody id="opDeptTableBodyFull"></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <section class="page-view d-none" id="page-ipd">
+        <div class="panel">
+          <div class="panel-head"><div><h3>IPD Dashboard (รายละเอียด)</h3><div class="panel-sub">Admit / AdjRW / BOR / ALOS รายเดือน</div></div></div>
+          <div id="chartIpPerformanceFull" class="mt-2"></div>
+        </div>
+      </section>
+
+      <section class="page-view d-none" id="page-fund">
+        <div class="panel">
+          <div class="panel-head"><div><h3>เงินบำรุง (รายละเอียด)</h3><div class="panel-sub">แนวโน้มรายรับ-รายจ่าย-คงเหลือ รายเดือน</div></div></div>
+          <div id="chartFundTrendFull" class="mt-2"></div>
+        </div>
+      </section>
+
+      <section class="page-view d-none" id="page-productivity">
+        <div class="panel"><div class="placeholder-page">
+          <i class="bi bi-graph-up-arrow"></i>
+          <h3>ผลงานและผลิตภาพ — อยู่ระหว่างพัฒนา</h3>
+          <p>ต่อยอดจากข้อมูล Admit / AdjRW / รายได้รายหน่วยงานที่มีอยู่แล้ว</p>
+        </div></div>
+      </section>
+
+      <section class="page-view d-none" id="page-kpi">
+        <div class="panel"><div class="placeholder-page">
+          <i class="bi bi-speedometer2"></i>
+          <h3>KPI ผู้บริหาร — อยู่ระหว่างพัฒนา</h3>
+          <p>สำหรับกำหนดตัวชี้วัด เป้าหมายรายปี และการติดตามผลเทียบเป้า</p>
+        </div></div>
+      </section>
+
+      <section class="page-view d-none" id="page-reports">
+        <div class="panel"><div class="placeholder-page">
+          <i class="bi bi-file-earmark-text"></i>
+          <h3>รายงาน — อยู่ระหว่างพัฒนา</h3>
+          <p>ส่งออกรายงานสรุปเป็น PDF / Excel สำหรับนำเสนอผู้บริหาร</p>
+        </div></div>
+      </section>
+
+      <section class="page-view d-none" id="page-update">
+        <div class="panel">
+          <div class="panel-head"><div><h3>อัปเดตข้อมูล</h3><div class="panel-sub">อัปโหลดไฟล์ export รายเดือนทั้ง 4 ไฟล์ เพื่อสร้าง data.json ใหม่</div></div></div>
+          <div class="row g-3 mt-1">
+            <div class="col-md-6">
+              <label class="form-label small fw-semibold">monitorIP.xlsx</label>
+              <input type="file" class="form-control form-control-sm" id="fileMonitorIP" accept=".xlsx">
+            </div>
+            <div class="col-md-6">
+              <label class="form-label small fw-semibold">OP_รายแผนก.xlsx</label>
+              <input type="file" class="form-control form-control-sm" id="fileOpDept" accept=".xlsx">
+            </div>
+            <div class="col-md-6">
+              <label class="form-label small fw-semibold">เงินบำรุง.xlsx</label>
+              <input type="file" class="form-control form-control-sm" id="fileFund" accept=".xlsx">
+            </div>
+            <div class="col-md-6">
+              <label class="form-label small fw-semibold">ผลงานIP.xlsx</label>
+              <input type="file" class="form-control form-control-sm" id="fileIpRevenue" accept=".xlsx">
+            </div>
+          </div>
+          <button class="btn btn-primary btn-sm mt-3" id="btnBuildDataset"><i class="bi bi-cloud-download me-1"></i> ประมวลผล &amp; ดาวน์โหลด data.json</button>
+          <div class="data-note mt-3">
+            <i class="bi bi-info-circle-fill"></i>
+            <div>เมื่อดาวน์โหลดไฟล์ <code>data.json</code> ใหม่แล้ว ให้นำไปแทนที่ไฟล์เดิมที่ <code>js/data.json</code> แล้วอัปโหลดขึ้น GitHub Pages ตามขั้นตอนเดิม</div>
+          </div>
+          <div id="updateStatus" class="mt-2 small"></div>
+        </div>
+      </section>
+
+      <section class="page-view d-none" id="page-settings">
+        <div class="panel"><div class="placeholder-page">
+          <i class="bi bi-gear"></i>
+          <h3>ตั้งค่า — อยู่ระหว่างพัฒนา</h3>
+          <p>สำหรับตั้งค่าปีงบประมาณ เป้าหมาย และสิทธิ์การเข้าถึงในอนาคต</p>
+        </div></div>
+      </section>
+
+    </main>
+
+    <footer class="app-footer">
+      <span>LKW Executive Revenue Management Dashboard</span>
+      <span>Revenue Management Unit, Laokwan Hospital</span>
+      <span>Version 1.0 · © 2569 Laokwan Hospital</span>
+    </footer>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script src="js/chart.js"></script>
+<script src="js/excel.js"></script>
+<script src="js/app.js"></script>
+<script>
+  document.getElementById('btnBuildDataset').addEventListener('click', async () => {
+    const files = {
+      monitorIP: document.getElementById('fileMonitorIP').files[0],
+      opDept: document.getElementById('fileOpDept').files[0],
+      fund: document.getElementById('fileFund').files[0],
+      ipRevenue: document.getElementById('fileIpRevenue').files[0],
+    };
+    const statusEl = document.getElementById('updateStatus');
+    if (!files.monitorIP || !files.opDept || !files.fund || !files.ipRevenue) {
+      statusEl.innerHTML = '<span class="text-danger">กรุณาเลือกไฟล์ให้ครบทั้ง 4 ไฟล์</span>';
+      return;
+    }
+    statusEl.textContent = 'กำลังประมวลผล...';
+    try {
+      const dataset = await LKWExcel.buildDataset(files);
+      LKWExcel.downloadJson(dataset, 'data.json');
+      statusEl.innerHTML = '<span class="text-success">ประมวลผลสำเร็จ — ดาวน์โหลด data.json แล้ว</span>';
+    } catch (err) {
+      console.error(err);
+      statusEl.innerHTML = '<span class="text-danger">เกิดข้อผิดพลาด: ' + err.message + '</span>';
+    }
+  });
+</script>
+</body>
+</html>
